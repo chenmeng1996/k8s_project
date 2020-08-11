@@ -1,0 +1,157 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zookeeper
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-cluster-1
+  namespace: zookeeper
+  labels:
+    app: zookeeper-cluster-service-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper-cluster-service-1
+  template:
+    metadata:
+      labels:
+        app: zookeeper-cluster-service-1
+        name: zookeeper-cluster-1
+    spec:
+      containers:
+      - image: zookeeper
+        imagePullPolicy: IfNotPresent
+        name: zookeeper-cluster-1
+        ports:
+        - containerPort: 2181
+        env:
+        - name: ZOO_MY_ID
+          value: "1"
+        - name: ZOO_SERVERS
+          value: "server.1=0.0.0.0:2888:3888;2181 server.2=zookeeper-cluster2:2888:3888;2181 server.3=zookeeper-cluster3:2888:3888;2181"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-cluster-2
+  namespace: zookeeper
+  labels:
+    app: zookeeper-cluster-service-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper-cluster-service-2
+  template:
+    metadata:
+      labels:
+        app: zookeeper-cluster-service-2
+        name: zookeeper-cluster-2
+    spec:
+      containers:
+      - image: zookeeper
+        imagePullPolicy: IfNotPresent
+        name: zookeeper-cluster-2
+        ports:
+        - containerPort: 2181
+        env:
+        - name: ZOO_MY_ID
+          value: "2"
+        - name: ZOO_SERVERS
+          value: "server.1=zookeeper-cluster1:2888:3888;2181 server.2=0.0.0.0:2888:3888;2181 server.3=zookeeper-cluster3:2888:3888;2181"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-cluster-3
+  namespace: zookeeper
+  labels:
+    app: zookeeper-cluster-service-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper-cluster-service-3
+  template:
+    metadata:
+      labels:
+        app: zookeeper-cluster-service-3
+        name: zookeeper-cluster-3
+    spec:
+      containers:
+      - image: zookeeper
+        imagePullPolicy: IfNotPresent
+        name: zookeeper-cluster-3
+        ports:
+        - containerPort: 2181
+        env:
+        - name: ZOO_MY_ID
+          value: "3"
+        - name: ZOO_SERVERS
+          value: "server.1=zookeeper-cluster1:2888:3888;2181 server.2=zookeeper-cluster2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-cluster1
+  namespace: zookeeper
+  labels:
+    app: zookeeper-cluster-service-1
+spec:
+  ports:
+  - name: client 
+    port: 2181
+    protocol: TCP
+  - name: follower
+    port: 2888
+    protocol: TCP
+  - name: leader
+    port: 3888
+    protocol: TCP
+  selector:
+    app: zookeeper-cluster-service-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-cluster2
+  namespace: zookeeper
+  labels:
+    app: zookeeper-cluster-service-2
+spec:
+  ports:
+  - name: client 
+    port: 2181
+    protocol: TCP
+  - name: follower
+    port: 2888
+    protocol: TCP
+  - name: leader
+    port: 3888
+    protocol: TCP
+  selector:
+    app: zookeeper-cluster-service-2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-cluster3
+  namespace: zookeeper
+  labels:
+    app: zookeeper-cluster-service-3
+spec:
+  ports:
+  - name: client 
+    port: 2181
+    protocol: TCP
+  - name: follower
+    port: 2888
+    protocol: TCP
+  - name: leader
+    port: 3888
+    protocol: TCP
+  selector:
+    app: zookeeper-cluster-service-3
